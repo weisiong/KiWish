@@ -1,0 +1,46 @@
+﻿@import "tailwindcss";
+
+@theme {
+  /*
+    Do not remove the @theme directive. It's required for Tailwind CSS v4
+    to properly generate your theme configuration.
+  */
+  --color-cream: #faf9f6;
+  --color-stone-50: #fcfaf8;
+  --color-stone-100: #f5f0eb;
+  --color-stone-200: #e6ded6;
+  --color-stone-800: #4a4036;
+  --color-stone-900: #2c2520;
+  --color-kiwi-100: #f0f7e6;
+  --color-kiwi-300: #d4e8b3;
+  --color-kiwi-500: #8cc63f; /* Brand Green */
+  --color-kiwi-600: #6fa32d;
+  --color-kiwi-700: #4d7c0f;
+  --color-kiwi-900: #2d3b2d; /* Dark Text */
+  --color-gold-400: #d4af37;
+  --color-gold-500: #c5a059; /* Brand Gold */
+  --color-gold-600: #b08d55;
+  
+  --font-sans: 'Inter', sans-serif;
+  --font-serif: 'Playfair Display', serif;
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .5; }
+}
