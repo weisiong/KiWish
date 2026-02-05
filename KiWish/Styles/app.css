@@ -1,4 +1,4 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
 
 @theme {
   /*
@@ -43,4 +43,10 @@
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: .5; }
+}
+
+/* Remove focus outline on the hero heading to prevent black border on load */
+h1:focus,
+h1:focus-visible {
+  outline: none;
 }

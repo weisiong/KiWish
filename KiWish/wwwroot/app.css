@@ -1441,6 +1441,9 @@
     opacity: .5;
   }
 }
+h1:focus, h1:focus-visible {
+  outline: none;
+}
 @property --tw-scale-x {
   syntax: "*";
   inherits: false;
