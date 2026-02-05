@@ -1,0 +1,152 @@
+@using KiWish.Services
+@using Markdig
+@inject ProductKnowledgeService ProductService
+@inject IAIService AIService
+@inject IJSRuntime JS
+
+<div class="chatbox-container">
+    <div class="chat-window @(IsOpen ? "open" : "")">
+        <div class="chat-header">
+            <span>KiWish Support</span>
+            <div class="header-controls">
+                <button @onclick="ToggleChat" title="Close">✕</button>
+            </div>
+        </div>
+
+        <div class="chat-messages" id="chat-messages">
+            @foreach (var msg in Messages)
+            {
+                <div class="message @msg.Role.ToLower()">
+                    @if (msg.Role == "AI")
+                    {
+                        @((MarkupString)Markdown.ToHtml(msg.Content))
+                    }
+                    else
+                    {
+                        @msg.Content
+                    }
+                </div>
+            }
+            @if (IsTyping)
+            {
+                <div class="typing-indicator">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <div class="message error">@ErrorMessage</div>
+            }
+        </div>
+
+        <div class="chat-input-area">
+            <input @bind="UserInput" @bind:event="oninput" @onkeyup="HandleKeyUp" placeholder="Type your question..." disabled="@IsTyping" />
+            <button class="send-btn" @onclick="SendMessage" disabled="@(string.IsNullOrWhiteSpace(UserInput) || IsTyping)">
+                ➤
+            </button>
+        </div>
+    </div>
+
+    <button class="chat-toggle-btn" @onclick="ToggleChat">
+        💬
+    </button>
+</div>
+
+@code {
+    private bool IsOpen = false;
+    private bool IsTyping = false;
+    private string UserInput = "";
+    private string ErrorMessage = "";
+    private string ProductInfo = "";
+    private DateTime LastMessageTime = DateTime.MinValue;
+    private List<ChatMessage> Messages = new List<ChatMessage>();
+
+    private class ChatMessage
+    {
+        public string Role { get; set; } = "User";
+        public string Content { get; set; } = "";
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        ProductInfo = await ProductService.GetProductInfoAsync();
+        // Add welcome message
+        Messages.Add(new ChatMessage { Role = "AI", Content = "Hello! I'm your KiWish assistant. Ask me anything about our detox drink!" });
+    }
+
+    private void ToggleChat()
+    {
+        IsOpen = !IsOpen;
+        if (IsOpen)
+        {
+            _ = ScrollToBottom();
+        }
+    }
+
+    private async Task HandleKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(UserInput) && !IsTyping)
+        {
+            await SendMessage();
+        }
+    }
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(UserInput)) return;
+
+        // Rate limiting: 1 message per 3 seconds
+        if ((DateTime.Now - LastMessageTime).TotalSeconds < 3)
+        {
+            ErrorMessage = "Please wait a moment before sending another message.";
+            return;
+        }
+
+        ErrorMessage = "";
+        LastMessageTime = DateTime.Now;
+
+        var userMsg = UserInput;
+        UserInput = "";
+        Messages.Add(new ChatMessage { Role = "User", Content = userMsg });
+        
+        IsTyping = true;
+        await ScrollToBottom();
+        StateHasChanged(); // Force re-render to show typing indicator
+
+        try
+        {
+            // Prepare system prompt
+            var systemPrompt = $"You are a helpful customer support assistant for KiWish. Use the following product information to answer user questions. If the answer is not in the information, politely say you don't know. Keep answers concise and helpful.\n\nProduct Information:\n{ProductInfo}";
+
+            // Call AI Service
+            var response = await AIService.GetResponseAsync(userMsg, systemPrompt);
+            
+            Messages.Add(new ChatMessage { Role = "AI", Content = response });
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Failed to get response. Please try again.";
+            Console.WriteLine(ex.Message);
+        }
+        finally
+        {
+            IsTyping = false;
+            await ScrollToBottom();
+        }
+    }
+
+    private async Task ScrollToBottom()
+    {
+        await Task.Delay(100); // Allow render to happen
+        try
+        {
+            await JS.InvokeVoidAsync("scrollToBottom", "chat-messages");
+        }
+        catch
+        {
+            // Ignore JS errors if element not found yet
+        }
+    }
+}

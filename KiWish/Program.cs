@@ -10,6 +10,10 @@ builder.Services.AddRazorComponents()
 // Add Stripe service
 builder.Services.AddScoped<StripeService>();
 
+// Add AI Services
+builder.Services.AddSingleton<ProductKnowledgeService>();
+builder.Services.AddHttpClient<IAIService, GeminiAIService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

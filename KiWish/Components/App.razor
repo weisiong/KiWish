@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -23,6 +23,14 @@
     <script>
         // Initialize Lucide icons
         lucide.createIcons();
+
+        // Chatbox scroll helper
+        window.scrollToBottom = (elementId) => {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.scrollTop = element.scrollHeight;
+            }
+        };
     </script>
     <script>
         // Smooth scrolling for anchor links
