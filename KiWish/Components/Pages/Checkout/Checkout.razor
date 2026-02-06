@@ -6,98 +6,274 @@
 
 <PageTitle>Checkout - KiWish</PageTitle>
 
-<div class="bg-cream min-h-screen py-12">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-12">
-            <h1 class="font-serif text-4xl font-bold text-kiwi-900 mb-4">Complete Your Order</h1>
-            <p class="text-stone-600">Secure checkout powered by Stripe</p>
+@if (Loading)
+{
+    <div class="flex justify-center items-center h-64">
+        <div class="text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-kiwi-600 mx-auto"></div>
+            <p class="mt-4 text-stone-600">Loading products...</p>
         </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- Order Summary -->
-            <div class="bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
-                <h2 class="text-xl font-bold text-stone-900 mb-6">Order Summary</h2>
-                
-                <div class="flex items-center gap-4 mb-6">
-                    <img src="ProductImage.jpeg" alt="KiWish Product" class="w-20 h-20 object-cover rounded-lg">
-                    <div>
-                        <h3 class="font-medium text-stone-900">KiWish Detox</h3>
-                        <p class="text-stone-600 text-sm">Stubborn Fat Reduction Formula</p>
-                        <p class="text-kiwi-600 font-semibold">USD $49.99</p>
-                    </div>
-                </div>
-
-                <div class="border-t border-stone-100 pt-4 mt-4">
-                    <div class="flex justify-between mb-2">
-                        <span class="text-stone-600">Quantity</span>
-                        <span class="text-stone-900">@Quantity</span>
-                    </div>
-                    <div class="flex justify-between mb-2">
-                        <span class="text-stone-600">Subtotal</span>
-                        <span class="text-stone-900">$@Subtotal.ToString("F2")</span>
-                    </div>
-                    <div class="flex justify-between mb-2">
-                        <span class="text-stone-600">Shipping</span>
-                        <span class="text-stone-900">$@Shipping.ToString("F2")</span>
-                    </div>
-                    <div class="flex justify-between mt-4 pt-4 border-t border-stone-100 font-bold text-lg">
-                        <span>Total</span>
-                        <span class="text-kiwi-600">$@Total.ToString("F2")</span>
-                    </div>
-                </div>
+    </div>
+}
+else
+{
+    <div class="bg-cream min-h-screen py-12">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h1 class="font-serif text-4xl font-bold text-kiwi-900 mb-4">Complete Your Order</h1>
+                <p class="text-stone-600">Secure checkout powered by Stripe</p>
             </div>
 
-            <!-- Payment Form -->
-            <div class="bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
-                <h2 class="text-xl font-bold text-stone-900 mb-6">Payment Information</h2>
-                
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-stone-700 mb-1">Full Name</label>
-                        <input type="text" @bind="CustomerName" class="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-kiwi-500 focus:border-kiwi-500" placeholder="John Doe" />
-                    </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Product Selection -->
+                <div class="bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
+                    <h2 class="text-xl font-bold text-stone-900 mb-6">Select Product</h2>
                     
-                    <div>
-                        <label class="block text-sm font-medium text-stone-700 mb-1">Email</label>
-                        <input type="email" @bind="CustomerEmail" class="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-kiwi-500 focus:border-kiwi-500" placeholder="john@example.com" />
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-stone-700 mb-1">Quantity</label>
-                        <select @bind="Quantity" class="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-kiwi-500 focus:border-kiwi-500">
-                            @for (int i = 1; i <= 10; i++)
+                    @if (AvailableProducts != null && AvailableProducts.Any())
+                    {
+                        <div class="space-y-4">
+                            @foreach (var product in AvailableProducts)
                             {
-                                <option value="@i">@i @(i == 1 ? "bottle" : "bottles")</option>
+                                var isSelected = SelectedProduct?.Id == product.Id;
+                                var productImage = product.Images?.Any() == true ? product.Images.First() : "ProductImage.jpeg";
+                                var productDescription = !string.IsNullOrEmpty(product.Description) ? product.Description : "KiWish Detox Product - Advanced Detox Solution";
+                                
+                                <div class="border rounded-lg p-4 cursor-pointer @(isSelected ? "border-kiwi-600 bg-kiwi-50" : "border-stone-200 hover:border-kiwi-300")" 
+                                     @onclick="() => SelectProduct(product)">
+                                                                                                <div class="flex items-center gap-4">
+                                                                                                    <img src="@productImage" alt="@product.Name" class="w-24 h-24 object-cover rounded-lg">
+                                                                                                    <div class="flex-1">
+                                                                                                        <h3 class="font-medium text-stone-900">@product.Name</h3>
+                                                                                                        <p class="text-stone-600 text-sm">@productDescription</p>
+                                                                                                        @if (ProductPrices.ContainsKey(product.Id) && ProductPrices[product.Id].Any())
+                                                                                                        {
+                                                                                                            var price = ProductPrices[product.Id].First();
+                                                                                                            <p class="text-kiwi-600 font-semibold">@price.Currency.ToUpper() $@($"{(price.UnitAmountDecimal ?? 4999) / 100:F2}")</p>
+                                                                                                        }                                        </div>
+                                        <div class="flex items-center">
+                                            <input type="radio" name="selectedProduct" checked="@isSelected" class="h-4 w-4 text-kiwi-600 border-stone-300" />
+                                        </div>
+                                    </div>
+                                </div>
                             }
-                        </select>
-                    </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-stone-600">No products available at the moment.</p>
+                    }
+                </div>
+
+                <!-- Order Summary & Payment Form -->
+                <div class="bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
+                    <h2 class="text-xl font-bold text-stone-900 mb-6">Order Summary</h2>
                     
-                    <div class="pt-4">
-                        <button @onclick="ProcessPayment" disabled="@IsProcessing" class="w-full bg-kiwi-600 text-white py-4 rounded-full font-medium shadow-lg shadow-kiwi-600/30 hover:bg-kiwi-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 @(IsProcessing ? "opacity-70 cursor-not-allowed" : "")">
-                            @(IsProcessing ? "Processing..." : $"Pay ${Total.ToString("F2")}")
-                        </button>
-                        <p class="text-center text-xs text-stone-500 mt-3">Secure payment powered by Stripe</p>
+                    @if (SelectedProduct != null)
+                    {
+                        var productImage = SelectedProduct.Images?.Any() == true ? SelectedProduct.Images.First() : "ProductImage.jpeg";
+                        var productDescription = !string.IsNullOrEmpty(SelectedProduct.Description) ? SelectedProduct.Description : "KiWish Detox Product - Advanced Detox Solution";
+                        var selectedPrice = ProductPrices.ContainsKey(SelectedProduct.Id) && ProductPrices[SelectedProduct.Id].Any() 
+                            ? ProductPrices[SelectedProduct.Id].First() 
+                            : null;
+                        var unitPrice = selectedPrice != null ? selectedPrice.UnitAmountDecimal / 100 ?? 49.99m : 49.99m;
+
+                        <div class="flex items-center gap-4 mb-6">
+                            <img src="@productImage" alt="@SelectedProduct.Name" class="w-40 h-40 object-cover rounded-lg">
+                            <div>
+                                <h3 class="font-medium text-stone-900">@SelectedProduct.Name</h3>
+                                <p class="text-stone-600 text-sm">@productDescription</p>
+                                @if (selectedPrice != null)
+                                {
+                                    <p class="text-kiwi-600 font-semibold">@selectedPrice.Currency.ToUpper() $@($"{unitPrice:F2}")</p>
+                                }
+                                else
+                                {
+                                    <p class="text-kiwi-600 font-semibold">USD $@($"{unitPrice:F2}")</p>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="border-t border-stone-100 pt-4 mt-4">
+                            <div class="flex justify-between mb-2">
+                                <span class="text-stone-600">Quantity</span>
+                                <span class="text-stone-900">@Quantity</span>
+                            </div>
+                            <div class="flex justify-between mb-2">
+                                <span class="text-stone-600">Subtotal</span>
+                                <span class="text-stone-900">@Currency $@($"{Subtotal:F2}")</span>
+                            </div>
+                            <div class="flex justify-between mb-2">
+                                <span class="text-stone-600">Shipping</span>
+                                <span class="text-stone-900">@Currency $@($"{Shipping:F2}")</span>
+                            </div>
+                            <div class="flex justify-between mt-4 pt-4 border-t border-stone-100 font-bold text-lg">
+                                <span>Total</span>
+                                <span class="text-kiwi-600">@Currency $@($"{Total:F2}")</span>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-stone-600 mb-6">Please select a product to continue.</p>
+                    }
+
+                    <!-- Payment Form -->
+                    <div class="space-y-4 mt-6">
+                        <div>
+                            <label class="block text-sm font-medium text-stone-700 mb-1">Full Name</label>
+                            <input type="text" @bind="CustomerName" class="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-kiwi-500 focus:border-kiwi-500" placeholder="John Doe" />
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-stone-700 mb-1">Email</label>
+                            <input type="email" @bind="CustomerEmail" class="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-kiwi-500 focus:border-kiwi-500" placeholder="john@example.com" />
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-stone-700 mb-1">Quantity</label>
+                            <select @bind="Quantity" class="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-kiwi-500 focus:border-kiwi-500" disabled="@(SelectedProduct == null)">
+                                @for (int i = 1; i <= 10; i++)
+                                {
+                                    <option value="@i">@i @(i == 1 ? UnitName : UnitName + "s")</option>
+                                }
+                            </select>
+                        </div>
+                        
+                        <div class="pt-4">
+                            <button @onclick="ProcessPayment" disabled="@(IsProcessing || SelectedProduct == null)" class="w-full bg-kiwi-600 text-white py-4 rounded-full font-medium shadow-lg shadow-kiwi-600/30 hover:bg-kiwi-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 @(IsProcessing || SelectedProduct == null ? "opacity-70 cursor-not-allowed" : "")">
+                                @(IsProcessing ? "Processing..." : SelectedProduct != null ? $"Pay {Currency} ${Total:F2}" : "Select a Product First")
+                            </button>
+                            <p class="text-center text-xs text-stone-500 mt-3">Secure payment powered by Stripe</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+}
 
 @code {
+    private List<Stripe.Product> AvailableProducts = new List<Stripe.Product>();
+    private Dictionary<string, List<Stripe.Price>> ProductPrices = new Dictionary<string, List<Stripe.Price>>();
+    private Stripe.Product? SelectedProduct;
+    private string UnitName = "set";  // Default unit name
     private string CustomerName = "";
     private string CustomerEmail = "";
     private int Quantity = 1;
     private bool IsProcessing = false;
+    private bool Loading = true;
     
     private decimal UnitPrice = 49.99m;
+    private string Currency = "USD";
     private decimal Shipping = 5.99m;
     
     private decimal Subtotal => UnitPrice * Quantity;
     private decimal Total => Subtotal + Shipping;
 
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProducts();
+        Loading = false;
+    }
+
+    private async Task LoadProducts()
+    {
+        try
+        {
+            AvailableProducts = await StripeService.GetProductsAsync();
+            
+            // Load prices for each product
+            foreach (var product in AvailableProducts)
+            {
+                var prices = await StripeService.GetPricesForProductAsync(product.Id);
+                ProductPrices[product.Id] = prices;
+            }
+            
+            // Select the first product by default if available
+            if (AvailableProducts.Any())
+            {
+                SelectedProduct = AvailableProducts.First();
+                UpdateUnitName();
+                UpdateUnitPrice();
+            }
+        }
+        catch (Exception ex)
+        {
+            // In a real app, you would handle the error properly
+            Console.WriteLine($"Error loading products: {ex.Message}");
+        }
+    }
+
+    private void SelectProduct(Stripe.Product product)
+    {
+        SelectedProduct = product;
+        UpdateUnitName();
+        UpdateUnitPrice();
+    }
+
+    private void UpdateUnitName()
+    {
+        if (SelectedProduct != null)
+        {
+            // Try to get unit name from product metadata first
+            if (SelectedProduct.Metadata != null && SelectedProduct.Metadata.ContainsKey("unit_name"))
+            {
+                UnitName = SelectedProduct.Metadata["unit_name"];
+            }
+            else
+            {
+                // Default to "set" but could be updated based on product name or other properties
+                // Check if product name contains keywords that suggest the unit type
+                var productName = SelectedProduct.Name?.ToLower() ?? "";
+                
+                if (productName.Contains("pack") || productName.Contains("set"))
+                {
+                    UnitName = "set";
+                }
+                else if (productName.Contains("tablet") || productName.Contains("capsule"))
+                {
+                    UnitName = "tablet";
+                }
+                else if (productName.Contains("day") || productName.Contains("supply"))
+                {
+                    // For products that specify a time period, use "set" as the unit
+                    UnitName = "set";
+                }
+                else
+                {
+                    UnitName = "set";
+                }
+            }
+        }
+        else
+        {
+            UnitName = "set";
+        }
+    }
+
+    private void UpdateUnitPrice()
+    {
+        if (SelectedProduct != null && ProductPrices.ContainsKey(SelectedProduct.Id) && ProductPrices[SelectedProduct.Id].Any())
+        {
+            var price = ProductPrices[SelectedProduct.Id].First();
+            UnitPrice = (price.UnitAmountDecimal ?? 4999) / 100;
+            Currency = price.Currency?.ToUpper() ?? "USD";
+        }
+        else
+        {
+            UnitPrice = 49.99m;
+            Currency = "USD";
+        }
+    }
+
     private async Task ProcessPayment()
     {
+        if (SelectedProduct == null)
+        {
+            // No product selected
+            return;
+        }
+        
         if (string.IsNullOrWhiteSpace(CustomerName) || string.IsNullOrWhiteSpace(CustomerEmail))
         {
             // In a real app, you would show validation errors
@@ -111,11 +287,18 @@
             var successUrl = NavigationManager.BaseUri + "checkout/success?session_id={CHECKOUT_SESSION_ID}";
             var cancelUrl = NavigationManager.BaseUri + "checkout";
             
+            // Use the selected price if available, otherwise default to 49.99
+            var selectedPrice = ProductPrices.ContainsKey(SelectedProduct.Id) && ProductPrices[SelectedProduct.Id].Any() 
+                ? ProductPrices[SelectedProduct.Id].First() 
+                : null;
+            var unitPrice = selectedPrice != null ? selectedPrice.UnitAmountDecimal / 100 ?? 49.99m : 49.99m;
+            
             var checkoutUrl = await StripeService.CreateCheckoutSessionForKiWishProductAsync(
                 successUrl, 
                 cancelUrl, 
                 Quantity, 
-                UnitPrice
+                unitPrice,
+                Currency.ToLower()
             );
             
             // Redirect to Stripe checkout

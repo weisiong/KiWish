@@ -8,13 +8,12 @@ namespace KiWish.Services
         private string _content = string.Empty;
         private readonly string _filePath;
 
-        public ProductKnowledgeService()
+        public ProductKnowledgeService(IConfiguration configuration)
         {
-            // Assuming the file is at the specified path relative to the solution or absolute
-            // In a real app, I'd inject IWebHostEnvironment to get the path, but here I'll use the fixed path provided in instructions
-            // or relative to the app execution.
-            // The prompt gave: c:\Temp\KiWish_DotNet_20260204_1730\Specs\kiwish_product_info.md
-            _filePath = @"c:\Temp\KiWish_DotNet_20260204_1730\Specs\kiwish_product_info.md";
+            // Get the content root path from configuration and construct the correct path
+            var contentRootPath = configuration["ContentRootPath"] ?? AppContext.BaseDirectory;
+            _filePath = Path.Combine(contentRootPath, "wwwroot", "kiwish_product_info.md");
+            System.Console.WriteLine($"Product info file path: {_filePath}");
         }
 
         public async Task<string> GetProductInfoAsync()

@@ -7,11 +7,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// Add Stripe service
-builder.Services.AddScoped<StripeService>();
-
 // Add AI Services
 builder.Services.AddSingleton<ProductKnowledgeService>();
+
+// Add Stripe service (depends on ProductKnowledgeService)
+builder.Services.AddScoped<StripeService>();
 builder.Services.AddHttpClient<IAIService, GeminiAIService>();
 
 var app = builder.Build();

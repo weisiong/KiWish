@@ -11,6 +11,12 @@
     <PackageReference Include="Stripe.net" Version="50.3.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Update="wwwroot\kiwish_product_info.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
     <Exec Command="npm run build:css" />
   </Target>

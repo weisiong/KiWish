@@ -26,11 +26,11 @@
                     </div>
                     <div class="flex justify-between">
                         <span class="text-stone-600">Quantity:</span>
-                        <span class="text-stone-900">@Quantity bottles</span>
+                        <span class="text-stone-900">@Quantity @(Quantity == 1 ? "set" : "sets")</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-stone-600">Total:</span>
-                        <span class="text-kiwi-600 font-semibold">$@Total</span>
+                        <span class="text-kiwi-600 font-semibold">@Currency $@($"{Total:F2}")</span>
                     </div>
                 </div>
                 
@@ -62,7 +62,8 @@
     public string? SessionId { get; set; }
 
     private int Quantity = 1;
-    private string Total = "55.98";
+    private decimal Total = 55.98m;
+    private string Currency = "USD";
 
     protected override async Task OnInitializedAsync()
     {
@@ -84,7 +85,12 @@
 
                     if (session.AmountTotal.HasValue)
                     {
-                        Total = (session.AmountTotal.Value / 100m).ToString("F2");
+                        Total = session.AmountTotal.Value / 100m;
+                    }
+                    
+                    if (!string.IsNullOrEmpty(session.Currency))
+                    {
+                        Currency = session.Currency.ToUpper();
                     }
                 }
             }
